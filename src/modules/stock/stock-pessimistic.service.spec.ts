@@ -8,7 +8,7 @@ import { PRISMA_CLIENT } from '@core/database/prisma.di-tokens';
 import { StockPessimisticService } from './stock-pessimistic.service';
 
 describe('StockService', () => {
-  let stockService: StockService;
+  let stockPerssimisticService: StockPessimisticService;
   let prismaService: PrismaService;
   let stockRepository: StockRepository;
 
@@ -35,7 +35,9 @@ describe('StockService', () => {
       ],
     }).compile();
 
-    stockService = module.get<StockService>(StockService);
+    stockPerssimisticService = module.get<StockPessimisticService>(
+      StockPessimisticService,
+    );
     prismaService = module.get<PrismaService>(PrismaService);
     stockRepository = module.get<StockRepository>(STOCK_REPOSITORY);
   });
@@ -70,18 +72,7 @@ describe('StockService', () => {
       const stockId = 99;
       const quantity = 1;
       // when & then
-      expect(stockService.decrease(stockId, quantity)).rejects.toThrowError();
-    });
-
-    it('상품의 재고를 감소시킵니다.', async () => {
-      // given
-      const stockId = 1;
-      const quantity = 1;
-      // when
-      await stockService.decrease(stockId, quantity);
-      // then
-      const stock = await stockRepository.findById(stockId);
-      expect(stock.getQuantity()).toEqual(99);
+      expect(stockPerssimisticService.decrease(stockId, quantity)).rejects.toThrowError();
     });
 
     it('재고 감소를 동시에 100개를 요청합니다.', async () => {
@@ -89,16 +80,26 @@ describe('StockService', () => {
       const stockId = 1;
       const quantity = 1;
       const decreaseRequests = Array.from(
-        { length: 10 },
-        () => stockService.decrease(stockId, quantity),
+        { length: 100 },
+        () =>  stockPerssimisticService.decrease(stockId, quantity),
       );
       // when
-      await Promise.all(decreaseRequests.map((req) => req));
+      await Promise.all(decreaseRequests.map((request) => request));
       // then
       const stock = await stockRepository.findById(1);
 
-      // 동시성 문제로 인해 목표 재고 수량에 도달하지 않습니다.
-      expect(stock.getQuantity()).not.toEqual(0);
+      expect(stock.getQuantity()).toEqual(0);
+    });
+
+    it('상품의 재고를 감소시킵니다.', async () => {
+      // given
+      const stockId = 1;
+      const quantity = 1;
+      // when
+      await stockPerssimisticService.decrease(stockId, quantity);
+      // then
+      const stock = await stockRepository.findById(stockId);
+      expect(stock.getQuantity()).toEqual(99);
     });
   });
 });

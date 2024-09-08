@@ -19,6 +19,8 @@ model Product {
   updatedDate DateTime @updatedAt
   createdDate DateTime @default(now())
   stocks Stock[]
+
+  @@map("products")
 }
 
 model Stock {
@@ -27,4 +29,6 @@ model Stock {
   quantity Int @map("quantity") @default(0)
 
   product Product @relation(fields: [productId], references: [id])
+
+  @@map("stocks")
 }
