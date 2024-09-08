@@ -5,7 +5,6 @@ import { StockRepository } from './repository/stock.repository';
 import { StockPessimisticService } from './stock-pessimistic.service';
 
 @Module({
-  // imports: [],
   providers: [
     StockPessimisticService,
     StockService,

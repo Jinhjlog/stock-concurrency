@@ -7,6 +7,7 @@ export class StockMapper {
       id: stock.id,
       productId: stock.productId,
       quantity: stock.quantity,
+      version: stock.version,
     };
   }
 
@@ -15,6 +16,7 @@ export class StockMapper {
       id: payload.stock_id,
       productId: payload.product_id,
       quantity: payload.quantity,
+      version: payload.version,
     });
   }
 
@@ -23,6 +25,7 @@ export class StockMapper {
       id: payload.id,
       productId: payload.productId,
       quantity: payload.quantity,
+      version: payload.version,
     });
   }
 }

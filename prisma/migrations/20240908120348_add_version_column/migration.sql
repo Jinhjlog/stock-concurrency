@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `stocks` ADD COLUMN `version` INTEGER NOT NULL DEFAULT 0;

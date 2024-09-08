@@ -10,6 +10,7 @@ export type StockPayload = {
   stock_id: number;
   product_id: number;
   quantity: number;
+  version: number;
 };
 
 const validation = Prisma.validator<Prisma.StockDefaultArgs>()({
@@ -17,6 +18,8 @@ const validation = Prisma.validator<Prisma.StockDefaultArgs>()({
     id: true,
     productId: true,
     quantity: true,
+    version: true,
+     
   },
 });
 
@@ -39,6 +42,14 @@ export class StockRepository {
     return stock.length ? StockMapper.rawQueryToDomain(stock[0]) : null;
   }
 
+  async findByIdWithOptimisticLock(id: number): Promise<Stock | null> {
+    const query = await this.prisma.stock.findUnique({
+      where: { id }
+    })
+
+    return query ? StockMapper.toDomain(query) : null;
+  }
+
   async update(stock: Stock): Promise<void> {
     await this.prisma.stock.update({
       where: { id: stock.id },
@@ -53,7 +64,26 @@ export class StockRepository {
     });
   }
 
-  async save(stock: Stock): Promise<void> {
+  async updateWithOptimisticLock(stock: Stock): Promise<void> {
+    const currentVersion = stock.getVersion();
+
+    const result = await this.prisma.stock.updateMany({
+      where: {
+        id: stock.id,
+        version: currentVersion,
+      },
+      data: {
+        ...StockMapper.toEntity(stock),
+        version: currentVersion + 1,
+      },
+    });
+
+    if (result.count === 0) {
+      throw new Error('Optimistic lock error')
+    }
+  }
+
+  async create(stock: Stock): Promise<void> {
     await this.prisma.stock.create({
       data: StockMapper.toEntity(stock),
     });
